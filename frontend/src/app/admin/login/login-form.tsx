@@ -18,7 +18,7 @@ export function LoginForm() {
       const response = await adminSend("POST", "/api/v1/admin/sessions", {
         login: form.get("login"),
         password: form.get("password"),
-        code: form.get("code"),
+        totpOrRecoveryCode: form.get("code"),
       });
       if (response.ok) {
         router.replace("/admin");

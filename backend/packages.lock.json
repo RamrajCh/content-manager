@@ -2,6 +2,22 @@
   "version": 1,
   "dependencies": {
     "net10.0": {
+      "AngleSharp": {
+        "type": "Direct",
+        "requested": "[1.7.1, )",
+        "resolved": "1.7.1",
+        "contentHash": "QBblGpRB3SYD66Mls7fHyl1mWkP93n7ErWDWHc1vd9sPHhdlTkmUoY3CjgfjcWNxGF9m7xjNyztRfErXqoBKOA=="
+      },
+      "HtmlSanitizer": {
+        "type": "Direct",
+        "requested": "[9.2.995, )",
+        "resolved": "9.2.995",
+        "contentHash": "Yws4FratoTx4FDlvOjQTfuE49ATTVwAxNosv2CE2XqnOcmPuWWOWbLwEYP5w9uqvrGRyOgQloisKVokrgxKaXg==",
+        "dependencies": {
+          "AngleSharp": "1.7.1",
+          "AngleSharp.Css": "1.0.1"
+        }
+      },
       "MongoDB.Driver": {
         "type": "Direct",
         "requested": "[3.13.0, )",
@@ -31,6 +47,14 @@
           "Swashbuckle.AspNetCore.Swagger": "10.3.1",
           "Swashbuckle.AspNetCore.SwaggerGen": "10.3.1",
           "Swashbuckle.AspNetCore.SwaggerUI": "10.3.1"
+        }
+      },
+      "AngleSharp.Css": {
+        "type": "Transitive",
+        "resolved": "1.0.1",
+        "contentHash": "6S13xNHH+SUGPZd6EO1MhkuDbpEnFroUM6A8DZpLJHQnLRTvtBJb3Ydu65s618E4gWF9FSWmM5jhKk4RIfwT2A==",
+        "dependencies": {
+          "AngleSharp": "[1.5.0, 2.0.0)"
         }
       },
       "DnsClient": {

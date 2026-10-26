@@ -1,0 +1,37 @@
+@baseUrl = http://127.0.0.1:3000/api/v1
+@origin = http://127.0.0.1:3000
+# Supply secrets locally; never save populated credentials or tokens here.
+@login = replace-locally
+@password = replace-locally
+@secondFactor = replace-locally
+@csrf = replace-locally
+
+### Acquire a pre-auth cookie; copy csrfToken into @csrf.
+GET {{baseUrl}}/auth/csrf
+
+### Requires the pre-auth cookie from the preceding response.
+POST {{baseUrl}}/admin/sessions
+Origin: {{origin}}
+X-CSRF-Token: {{csrf}}
+Content-Type: application/json
+
+{
+  "login": "{{login}}",
+  "password": "{{password}}",
+  "totpOrRecoveryCode": "{{secondFactor}}"
+}
+
+### Requires the administrator cookie; anonymous requests return 401.
+GET {{baseUrl}}/admin/sessions/current
+
+### Acquire a new CSRF token bound to the administrator cookie.
+GET {{baseUrl}}/auth/csrf
+
+### Copy the new csrfToken into @csrf before signing out.
+DELETE {{baseUrl}}/admin/sessions/current
+Origin: {{origin}}
+X-CSRF-Token: {{csrf}}
+
+### Unsafe request without a CSRF token is rejected.
+DELETE {{baseUrl}}/admin/sessions/current
+Origin: {{origin}}

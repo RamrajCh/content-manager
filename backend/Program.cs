@@ -45,6 +45,22 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+var offlineModes = new[] { "--initialize-database", "--provision-owner", "--recover-owner", "--project-admin-audit" };
+if (args.Count(argument => offlineModes.Contains(argument, StringComparer.Ordinal)) > 1)
+{
+    Console.Error.WriteLine("Choose exactly one offline command.");
+    Environment.ExitCode = 1;
+    return;
+}
+
+if (args.Contains("--project-admin-audit", StringComparer.Ordinal))
+{
+    _ = app.Services.GetRequiredService<IOptions<PlatformOptions>>().Value;
+    await app.Services.GetRequiredService<AdminAuthService>().ProjectAuditAsync();
+    app.Logger.LogInformation("Administrator audit projection completed");
+    return;
+}
+
 if (args.Contains("--initialize-database", StringComparer.Ordinal))
 {
     _ = app.Services.GetRequiredService<IOptions<PlatformOptions>>().Value;

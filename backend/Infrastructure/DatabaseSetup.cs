@@ -7,6 +7,7 @@ public static class DatabaseSetup
 {
     public static async Task InitializeAsync(IMongoDatabase database)
     {
+        await InitializeAdminAsync(database);
         var indexes = new Dictionary<string, CreateIndexModel<BsonDocument>[]>
         {
             ["products"] = [new(Builders<BsonDocument>.IndexKeys.Ascending("slug"),
@@ -38,5 +39,17 @@ public static class DatabaseSetup
         };
         foreach (var (collection, models) in indexes)
             await database.GetCollection<BsonDocument>(collection).Indexes.CreateManyAsync(models);
+    }
+
+    public static async Task InitializeAdminAsync(IMongoDatabase database)
+    {
+        var admins = database.GetCollection<BsonDocument>("admins");
+        if (await admins.CountDocumentsAsync(FilterDefinition<BsonDocument>.Empty) > 1)
+            throw new InvalidOperationException("Multiple owner records exist. Resolve them offline before initialization.");
+        await admins.UpdateManyAsync(new BsonDocument("ownerSlot", new BsonDocument("$exists", false)),
+            new BsonDocument("$set", new BsonDocument("ownerSlot", "owner")));
+        await admins.Indexes.CreateOneAsync(new CreateIndexModel<BsonDocument>(
+            Builders<BsonDocument>.IndexKeys.Ascending("ownerSlot"),
+            new CreateIndexOptions { Name = "unique_owner_slot", Unique = true }));
     }
 }

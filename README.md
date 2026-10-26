@@ -182,9 +182,18 @@ bash ./scripts/run-api.sh
 This policy applies to all build warnings, including known vulnerability
 warnings; review them rather than interpreting a successful build as a clean
 dependency audit. The audit update resource has returned HTTP 403 locally.
-Validation still rejects dependency-audit problems or reported vulnerabilities.
-Rerun validation once the official audit resource is accessible to satisfy
-EX-03. Do not claim Phase 1 fully accepted while this review is incomplete.
+At the owner's request, local validation accepts the known NuGet audit HTTP 403
+as a non-blocking exception. If restore reports NU1900 with HTTP 403 (and its
+associated NU1905), the runner warns that dependency review is **INCOMPLETE**
+and skips the unavailable NuGet package audit. Build, frontend checks, npm audit
+and source-secret review still run. NuGet auditing stays enabled; when the feed
+is available, the normal audit runs automatically. Other audit failures and
+reported vulnerabilities still fail validation; NU1901 through NU1904 are
+treated as errors during validation restore.
+
+A successful local run with this exception is not a clean dependency review or
+production approval. Complete the NuGet review before release; the exception
+allows local validation to proceed without waiting for the audit feed.
 
 Frontend clean install, lint, build, typecheck and npm audit passed. ESLint
 9.39.5 is deprecated upstream but retained for the scaffold-compatible peer
@@ -232,6 +241,11 @@ bash ./scripts/run-api.sh --initialize-database
 bash ./scripts/run-api.sh --provision-owner --login owner
 ```
 
+Also rerun index setup when upgrading an existing local database. It adds the
+singleton owner slot without changing credentials. Multiple existing owner
+records cause initialization to fail for offline resolution, not silent deletion.
+Choose only one offline operation per invocation.
+
 The command prompts for a new password twice without displaying it (14 to 256
 characters). It displays the authenticator secret/URI and eight single-use
 recovery codes once. Enroll the secret in a TOTP authenticator (six digits,
@@ -251,16 +265,41 @@ bash ./scripts/run-api.sh --recover-owner
 ```
 
 Recovery changes the password, replaces the authenticator secret and recovery
-codes, clears lockout and deletes existing administrator sessions. Enroll the new
+codes, clears lockout and invalidates existing administrator session generations
+before deleting old session records. Racing logins using old credentials cannot
+produce usable sessions after recovery. Enroll the new
 secret and replace the old offline recovery copy. Protect database/CLI access as
 administrator-equivalent access. Never use chat-issued smoke-test credentials
 with real data.
 
 On the sign-in page, enter either the current authenticator code or an unused
 recovery code. A recovery code is consumed when accepted; an accepted TOTP time
-step cannot be reused. Five failed credential checks lock the account for
+step cannot be reused. Recovery-code login also invalidates older administrator
+sessions. Five failed credential checks lock the account for
 15 minutes, and authentication endpoints also have a per-process IP rate limit.
 Sessions expire after 30 minutes of inactivity or eight hours absolutely.
+
+Provisioning/recovery audit intents are saved atomically with the owner change
+and projected by event ID. Recovery-code usage also leaves a durable intent.
+Retry the idempotent projection (including after a failed projection) with:
+
+```powershell
+powershell -NoProfile -File .\scripts\run-api.ps1 -ProjectAdminAudit
+```
+
+```bash
+bash ./scripts/run-api.sh --project-admin-audit
+```
+
+An audit projection error is reported explicitly; it does not undo a completed
+credential change. If setup output was interrupted, recover credentials again
+from the trusted offline terminal. No automatic background audit projector is
+implemented yet.
+
+Manual API examples are in [Admin.http](backend/Admin.http). The login JSON
+field is `totpOrRecoveryCode`, matching the design contract. API clients must
+retain cookies and fetch a new CSRF token after login. All future administrator
+route groups must use the shared `RequireAdministrator` endpoint filter.
 
 ## Safety and scope
 
