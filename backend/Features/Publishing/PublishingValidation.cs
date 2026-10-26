@@ -51,6 +51,8 @@ public static partial class PublishingValidation
                 throw Invalid("assetIds", "Select at most five nonempty asset IDs.");
             product.AssetIds = request.AssetIds.Distinct().ToArray();
         }
+        if (product.CoverAssetId.HasValue && product.AssetIds.Contains(product.CoverAssetId.Value))
+            throw Invalid("assetIds", "A cover cannot also be a download attachment.");
         if (request.Pricing is not null)
         {
             ValidatePricing(request.Pricing);

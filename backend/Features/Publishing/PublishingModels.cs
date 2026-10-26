@@ -9,13 +9,16 @@ public enum ProductState { Draft, Published, Unpublished, Archived }
 public enum PricingMode { Free, Fixed, PWYW, Suggested, OptionalDonation, FixedPlusDonation }
 
 /// <summary>Authoring price configuration in integer NPR paisa; the server owns its version.</summary>
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record PricingInput(PricingMode Mode, string Currency = "NPR", long? FixedPaisa = null,
     long? MinimumPaisa = null, long? SuggestedPaisa = null, bool AllowZero = true, bool ContributionEnabled = false);
 
 /// <summary>Versioned owner-approved license text.</summary>
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record LicenseInput(int Version, string Text);
 
 /// <summary>Plain-text search-engine metadata.</summary>
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record SeoInput(string? Title = null, string? Description = null);
 
 /// <summary>Product fields. Create requires title and slug; PATCH changes only present fields.</summary>
@@ -40,6 +43,7 @@ public sealed record ProductWriteRequest
 public sealed record CategoryWriteRequest(string? Name, string? Slug);
 
 /// <summary>Requested lifecycle transition and optional plain-text reason.</summary>
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record ProductTransitionRequest(ProductState To, string? Reason);
 
 /// <summary>Server-owned version plus authoring price fields.</summary>
@@ -50,7 +54,13 @@ public sealed record PricingResponse(PricingMode Mode, string Currency, long? Fi
 public sealed record ProductResponse(Guid Id, string Title, string Slug, string Summary, string DescriptionHtml,
     ProductState State, Guid[] CategoryIds, string[] Tags, Guid? CoverAssetId, Guid[] AssetIds,
     PricingResponse Pricing, LicenseInput License, SeoInput Seo, string[] RedirectSlugs, long Revision,
-    DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt, DateTimeOffset? PublishedAt);
+    DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt, DateTimeOffset? PublishedAt)
+{
+    public IReadOnlyList<AssetPreviewResponse> Attachments { get; init; } = [];
+}
+
+/// <summary>Private attachment metadata and validation status, never storage credentials or object keys.</summary>
+public sealed record AssetPreviewResponse(Guid Id, string Kind, string Status, string Name, string MediaType, long SizeBytes);
 
 /// <summary>Administrator category metadata and revision.</summary>
 public sealed record CategoryResponse(Guid Id, string Name, string Slug, long Revision,

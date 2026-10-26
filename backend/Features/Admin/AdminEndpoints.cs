@@ -83,6 +83,10 @@ public static class AdminEndpoints
     public static RouteGroupBuilder RequireAdministrator(this RouteGroupBuilder group) =>
         group.AddEndpointFilter(RequireAdmin);
 
+    public static AdminIdentity CurrentAdministrator(HttpContext context) =>
+        context.Items[IdentityKey] as AdminIdentity
+            ?? throw new InvalidOperationException("Administrator authorization was not applied.");
+
     private static async ValueTask<object?> RequireAdmin(EndpointFilterInvocationContext invocation, EndpointFilterDelegate next)
     {
         var context = invocation.HttpContext;

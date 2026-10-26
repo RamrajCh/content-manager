@@ -1,0 +1,103 @@
+@baseUrl = http://127.0.0.1:3000/api/v1/admin
+@origin = http://127.0.0.1:3000
+# Sign in using Admin.http first. Retain the admin cookie and fetch its CSRF token.
+@csrf = replace-locally
+@productId = 9bd5c7d2-8b3f-47e5-9dd4-6fbcdf684057
+@categoryId = 6d512cba-e17c-46e1-9f22-31b5f3c84c62
+
+### Create category; choose a new key for another category, reuse only to replay.
+POST {{baseUrl}}/categories
+Origin: {{origin}}
+X-CSRF-Token: {{csrf}}
+Idempotency-Key: {{categoryId}}
+Content-Type: application/json
+
+{"name":"Templates","slug":"templates"}
+
+### List categories.
+GET {{baseUrl}}/categories?limit=20
+
+### Get category and ETag.
+GET {{baseUrl}}/categories/{{categoryId}}
+
+### Update category using its current ETag.
+PATCH {{baseUrl}}/categories/{{categoryId}}
+Origin: {{origin}}
+X-CSRF-Token: {{csrf}}
+If-Match: "1"
+Content-Type: application/json
+
+{"name":"Download templates"}
+
+### Create draft. Missing description/license/assets are allowed in drafts only.
+POST {{baseUrl}}/products
+Origin: {{origin}}
+X-CSRF-Token: {{csrf}}
+Idempotency-Key: {{productId}}
+Content-Type: application/json
+
+{
+  "title":"Sample template",
+  "slug":"sample-template",
+  "summary":"A downloadable template.",
+  "descriptionHtml":"<p>Editable <strong>template</strong>.</p>",
+  "categoryIds":["{{categoryId}}"],
+  "tags":["template"],
+  "pricing":{"mode":"Free","currency":"NPR","allowZero":true,"contributionEnabled":false},
+  "license":{"version":1,"text":"Personal use."},
+  "seo":{"title":"Sample template","description":"Template preview."}
+}
+
+### List private drafts; cursor from nextCursor must be URL-encoded.
+GET {{baseUrl}}/products?state=Draft&limit=20
+
+### Private preview with revision ETag.
+GET {{baseUrl}}/products/{{productId}}
+
+### Edit slug: old slug remains reserved and is recorded for later public redirect.
+PATCH {{baseUrl}}/products/{{productId}}
+Origin: {{origin}}
+X-CSRF-Token: {{csrf}}
+If-Match: "1"
+Content-Type: application/json
+
+{"slug":"sample-template-updated","categoryIds":[],"coverAssetId":null}
+
+### Publish stays blocked with 422 until EX-09, even with otherwise complete metadata.
+POST {{baseUrl}}/products/{{productId}}/transitions
+Origin: {{origin}}
+X-CSRF-Token: {{csrf}}
+If-Match: "2"
+Content-Type: application/json
+
+{"to":"Published","reason":"Ready for review"}
+
+### Unpublish only applies to Published (409 for a draft).
+POST {{baseUrl}}/products/{{productId}}/transitions
+Origin: {{origin}}
+X-CSRF-Token: {{csrf}}
+If-Match: "2"
+Content-Type: application/json
+
+{"to":"Unpublished"}
+
+### Archive; archived products cannot be deleted or republished.
+POST {{baseUrl}}/products/{{productId}}/transitions
+Origin: {{origin}}
+X-CSRF-Token: {{csrf}}
+If-Match: "2"
+Content-Type: application/json
+
+{"to":"Archived","reason":"Retired"}
+
+### Stale revision returns 412; otherwise archived/reference state returns 409.
+DELETE {{baseUrl}}/products/{{productId}}
+Origin: {{origin}}
+X-CSRF-Token: {{csrf}}
+If-Match: "3"
+
+### Category deletion returns 409 while referenced; succeeds after reassignment.
+DELETE {{baseUrl}}/categories/{{categoryId}}
+Origin: {{origin}}
+X-CSRF-Token: {{csrf}}
+If-Match: "2"

@@ -1,6 +1,6 @@
-param([switch]$InitializeDatabase, [switch]$NoBuild, [switch]$ProvisionOwner, [switch]$RecoverOwner, [switch]$ProjectAdminAudit, [string]$Login)
+param([switch]$InitializeDatabase, [switch]$NoBuild, [switch]$ProvisionOwner, [switch]$RecoverOwner, [switch]$ProjectAdminAudit, [switch]$ReconcilePublishing, [switch]$ConfirmOffline, [string]$Login)
 $ErrorActionPreference = 'Stop'
-if (@($InitializeDatabase, $ProvisionOwner, $RecoverOwner, $ProjectAdminAudit).Where({ $_.IsPresent }).Count -gt 1) {
+if (@($InitializeDatabase, $ProvisionOwner, $RecoverOwner, $ProjectAdminAudit, $ReconcilePublishing).Where({ $_.IsPresent }).Count -gt 1) {
     throw 'Choose exactly one offline command.'
 }
 . (Join-Path $PSScriptRoot 'import-local-environment.ps1')
@@ -14,5 +14,9 @@ if ($ProvisionOwner) {
 }
 if ($RecoverOwner) { $arguments += @('--', '--recover-owner') }
 if ($ProjectAdminAudit) { $arguments += @('--', '--project-admin-audit') }
+if ($ReconcilePublishing) {
+    if (-not $ConfirmOffline) { throw 'Stop all API writers, then supply -ConfirmOffline.' }
+    $arguments += @('--', '--reconcile-publishing', '--confirm-offline')
+}
 & dotnet @arguments
 if ($LASTEXITCODE -ne 0) { throw 'API command failed. Review the safe diagnostics above.' }
