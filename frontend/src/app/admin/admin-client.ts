@@ -1,0 +1,17 @@
+async function csrfToken(): Promise<string> {
+  const response = await fetch("/api/v1/auth/csrf", { cache: "no-store" });
+  if (!response.ok) throw new Error("csrf");
+  return ((await response.json()) as { csrfToken: string }).csrfToken;
+}
+
+export async function adminSend(method: "POST" | "DELETE", path: string, body?: unknown) {
+  return fetch(path, {
+    method,
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRF-Token": await csrfToken(),
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}

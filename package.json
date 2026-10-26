@@ -1,0 +1,11 @@
+{
+  "name": "content-manager",
+  "private": true,
+  "scripts": {
+    "dev:web": "npm --prefix frontend run dev",
+    "build:web": "npm --prefix frontend run build",
+    "lint:web": "npm --prefix frontend run lint",
+    "typecheck:web": "npm --prefix frontend run typecheck",
+    "validate": "powershell -NoProfile -File scripts\\validate.ps1"
+  }
+}

@@ -1,0 +1,48 @@
+name: contentmanager-local
+
+services:
+  mongo:
+    image: mongo@sha256:4a4ab5d4834207389e0d7270fac988e21ffedccecba77991a552f755df229907
+    ports:
+      - "127.0.0.1:27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${LOCAL_MONGO_USER:?Run initialize-local.ps1}
+      MONGO_INITDB_ROOT_PASSWORD: ${LOCAL_MONGO_PASSWORD:?Run initialize-local.ps1}
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.adminCommand('ping').ok ? 0 : 1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    mem_limit: 768m
+
+  storage:
+    image: chrislusf/seaweedfs@sha256:c2658820e763294a9e9de7b36c81e59b879e3459148351aee4e31a126ca64860
+    command: mini -dir=/data -ip.bind=0.0.0.0
+    ports:
+      - "127.0.0.1:19000:8333"
+    environment:
+      AWS_ACCESS_KEY_ID: ${Platform__Storage__AccessKey:?Run initialize-local.ps1}
+      AWS_SECRET_ACCESS_KEY: ${Platform__Storage__SecretKey:?Run initialize-local.ps1}
+      S3_BUCKET: ${Platform__Storage__Bucket:?Run initialize-local.ps1}
+    volumes:
+      - storage-data:/data
+    mem_limit: 768m
+
+  mail:
+    image: axllent/mailpit@sha256:0790692be935ea4420d085694f7985b1f692ca6a8771ab0e0bd8ba75ac180498
+    ports:
+      - "127.0.0.1:11025:1025"
+      - "127.0.0.1:18025:8025"
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_MAX_MESSAGES: "100"
+    volumes:
+      - mail-data:/data
+    mem_limit: 128m
+
+volumes:
+  mongo-data:
+  storage-data:
+  mail-data:

@@ -1,0 +1,33 @@
+# Dependencies and generated application output
+**/node_modules/
+**/.next/
+**/out/
+**/bin/
+**/obj/
+**/*.tsbuildinfo
+**/next-env.d.ts
+**/coverage/
+**/TestResults/
+
+# Local environment and private credentials
+**/.env*
+!**/.env.example
+*.pfx
+*.p12
+*.pem
+*.key
+
+# IDE and operating-system local state
+**/*.user
+**/*.suo
+**/.vs/
+**/.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local runtime data, build snapshots and diagnostics
+/.local/
+/artifacts/
+**/.vercel/
+*.log
