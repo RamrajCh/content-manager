@@ -101,3 +101,33 @@ DELETE {{baseUrl}}/categories/{{categoryId}}
 Origin: {{origin}}
 X-CSRF-Token: {{csrf}}
 If-Match: "2"
+
+### Non-secret policy settings. An unconfigured standalone policy defaults off at revision 1.
+GET {{baseUrl}}/settings
+
+### Save policy using the revision returned by GET. No payment workflow is enabled.
+PUT {{baseUrl}}/settings/standaloneDonationsEnabled
+Origin: {{origin}}
+X-CSRF-Token: {{csrf}}
+If-Match: "1"
+Content-Type: application/json
+
+{"value":{"enabled":false}}
+
+### Unknown settings return 404; secrets/extra fields are not accepted.
+PUT {{baseUrl}}/settings/unsupported
+Origin: {{origin}}
+X-CSRF-Token: {{csrf}}
+If-Match: "1"
+Content-Type: application/json
+
+{"value":{"enabled":false}}
+
+### Newest projected audit events, default last seven days. nextCursor must be URL-encoded.
+GET {{baseUrl}}/audit-events?limit=20
+
+### Explicit bounded range (maximum 31 days).
+GET {{baseUrl}}/audit-events?since=2026-10-01T00:00:00Z&until=2026-10-27T23:59:59Z&limit=20
+
+### Invalid audit range returns 400.
+GET {{baseUrl}}/audit-events?since=2026-01-01T00:00:00Z&until=2026-10-27T00:00:00Z

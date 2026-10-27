@@ -4,12 +4,18 @@ async function csrfToken(): Promise<string> {
   return ((await response.json()) as { csrfToken: string }).csrfToken;
 }
 
-export async function adminSend(method: "POST" | "DELETE", path: string, body?: unknown) {
+export async function adminSend(
+  method: "POST" | "PATCH" | "PUT" | "DELETE",
+  path: string,
+  body?: unknown,
+  headers?: Record<string, string>,
+) {
   return fetch(path, {
     method,
     cache: "no-store",
     headers: {
       "Content-Type": "application/json",
+      ...headers,
       "X-CSRF-Token": await csrfToken(),
     },
     body: body === undefined ? undefined : JSON.stringify(body),

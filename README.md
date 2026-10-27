@@ -1,8 +1,10 @@
 # Content Manager
 
-Phase 1 development foundation for a single-owner digital-download platform.
-The frontend and backend are separate applications; publishing, authentication,
-commerce and email fulfillment are not implemented yet.
+Local development implementation for a single-owner digital-download platform.
+The frontend and backend are separate applications. Owner authentication,
+private product/category APIs, an authoring UI and basic settings/audit views
+are implemented locally; Phase 2 acceptance, validated publication, commerce and
+email fulfillment remain outstanding. See [Phase 2 progress](./docs/phase-2-progress.md).
 
 ## Structure
 
@@ -150,8 +152,10 @@ that data. Back up keys/data and plan credential rotation together.
 
 ## Validation
 
-The validation runner remains PowerShell-based; this change adds macOS setup and
-startup scripts, not a separate Bash validation pipeline.
+The validation runner remains PowerShell-based; macOS setup and startup scripts
+do not provide a separate Bash validation pipeline. Validation is owner-run:
+the assistant does not invoke this command automatically. Stop the local API
+yourself before a normal Release rebuild if its executable is locked.
 
 ```powershell
 npm run validate
@@ -300,6 +304,44 @@ Manual API examples are in [Admin.http](backend/Admin.http). The login JSON
 field is `totpOrRecoveryCode`, matching the design contract. API clients must
 retain cookies and fetch a new CSRF token after login. All future administrator
 route groups must use the shared `RequireAdministrator` endpoint filter.
+
+## Private publishing workspace
+
+Sign in at `http://127.0.0.1:3000/admin/login`, then use the authoring workspace
+at `/admin`. The configured origin must match; `localhost` and `127.0.0.1`
+are not interchangeable.
+
+- Create categories, then create/edit product drafts with metadata, tags,
+  category assignments, description HTML, license version and SEO fields.
+- Configure prices using integer NPR paisa (100 paisa = NPR 1). These fields
+  do not enable checkout or accept payments.
+- Save before opening the private preview. Only saved, API-sanitized content is
+  previewed; opening it leaves unsaved edits and their revision unchanged.
+- Increase the license version when changing saved license text. Old product
+  slugs stay reserved after renaming.
+- A stale edit returns an error instead of overwriting newer changes. Explicitly
+  reload the saved product/category to discard edits and use its current revision.
+- Archive/unpublish/delete operations remain subject to server-side lifecycle,
+  reference and revision checks. Publication stays blocked until EX-09.
+- Existing attachment metadata is read-only here; upload/replacement is future
+  work.
+- The standalone donation policy defaults off. Its typed, audited opt-in only
+  stores policy for the future donation workflow; it does not enable checkout
+  or payment collection. No secrets or receiving-account credentials are
+  editable or returned through this settings API.
+- Browse projected audit metadata over a maximum 31-day range (default seven
+  days), newest first, with incremental pagination. Product/category/settings
+  projection runs periodically; offline owner audit events still use the
+  explicit projection command above.
+
+The latest UI/settings/audit changes require an owner-run build and API restart;
+the existing API process is not restarted automatically. Run the existing
+`-InitializeDatabase` command to add the audit pagination index. This index
+initialization is additive and does not reset owner credentials.
+
+API-only examples are in [Publishing.http](./backend/Publishing.http). Manual
+acceptance scenarios and unrun gates are recorded in
+[Phase 2 progress](./docs/phase-2-progress.md).
 
 ## Safety and scope
 

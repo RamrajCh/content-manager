@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { adminSend } from "./admin-client";
+import { PublishingWorkspace } from "./publishing-workspace";
+import { PublishingSettings } from "./publishing-settings";
 
 export function AdminHome() {
   const router = useRouter();
@@ -42,11 +44,13 @@ export function AdminHome() {
   if (login === null) return <p role="status">{error || "Checking session…"}</p>;
   return (
     <>
-      <p>Signed in as {login}. Publishing tools are not available yet.</p>
+      <p>Signed in as {login}.</p>
       <button onClick={signOut} disabled={busy} className="w-fit rounded border px-3 py-2 font-medium">
         {busy ? "Signing out…" : "Sign out"}
       </button>
       <p role="alert">{error}</p>
+      <PublishingWorkspace />
+      <PublishingSettings />
     </>
   );
 }

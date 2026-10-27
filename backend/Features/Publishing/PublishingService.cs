@@ -21,6 +21,9 @@ public interface IPublishingService
     Task<CategoryResponse> CreateCategoryAsync(Guid id, CategoryWriteRequest request, Guid actor, CancellationToken ct);
     Task<CategoryResponse> UpdateCategoryAsync(Guid id, long revision, CategoryWriteRequest request, Guid actor, CancellationToken ct);
     Task DeleteCategoryAsync(Guid id, long revision, Guid actor, CancellationToken ct);
+    Task<PublishingPage<SettingResponse>> GetSettingsAsync(CancellationToken ct);
+    Task<SettingResponse> UpdateSettingAsync(string key, long revision, SettingWriteRequest request, Guid actor, CancellationToken ct);
+    Task<PublishingPage<AuditEventResponse>> ListAuditEventsAsync(DateTimeOffset? since, DateTimeOffset? until, string? cursor, int limit, CancellationToken ct);
     Task ProjectAuditAsync(CancellationToken ct);
     Task ReconcileOfflineAsync(CancellationToken ct);
 }
@@ -30,6 +33,8 @@ public sealed class PublishingService(IMongoDatabase database, TimeProvider cloc
     private IMongoCollection<ProductDocument> Products => database.GetCollection<ProductDocument>("products");
     private IMongoCollection<CategoryDocument> Categories => database.GetCollection<CategoryDocument>("categories");
     private IMongoCollection<SlugReservation> Slugs => database.GetCollection<SlugReservation>("slugReservations");
+    private IMongoCollection<PublishingSettingDocument> Settings => database.GetCollection<PublishingSettingDocument>("settings");
+    private const string StandaloneDonationKey = "standaloneDonationsEnabled";
     private const int AuditLimit = 100;
 
     public static void RegisterConventions() => ConventionRegistry.Register("Publishing",
@@ -362,7 +367,7 @@ public sealed class PublishingService(IMongoDatabase database, TimeProvider cloc
         while (await products.MoveNextAsync(ct))
             foreach (var product in products.Current)
             {
-                await ProjectAsync(product.Id, "product", product.AuditIntents, ct);
+                await ProjectAsync(new BsonBinaryData(product.Id, GuidRepresentation.Standard), "product", product.AuditIntents, ct);
                 var ids = product.AuditIntents.Select(i => i.Id).ToArray();
                 await Products.UpdateOneAsync(p => p.Id == product.Id,
                     Builders<ProductDocument>.Update.PullFilter(p => p.AuditIntents,
@@ -372,15 +377,25 @@ public sealed class PublishingService(IMongoDatabase database, TimeProvider cloc
         while (await categories.MoveNextAsync(ct))
             foreach (var category in categories.Current)
             {
-                await ProjectAsync(category.Id, "category", category.AuditIntents, ct);
+                await ProjectAsync(new BsonBinaryData(category.Id, GuidRepresentation.Standard), "category", category.AuditIntents, ct);
                 var ids = category.AuditIntents.Select(i => i.Id).ToArray();
                 await Categories.UpdateOneAsync(c => c.Id == category.Id,
                     Builders<CategoryDocument>.Update.PullFilter(c => c.AuditIntents,
                         Builders<PublishingAuditIntent>.Filter.In(i => i.Id, ids)), cancellationToken: ct);
             }
+        using var settings = await Settings.FindAsync(s => s.AuditIntents.Count > 0, cancellationToken: ct);
+        while (await settings.MoveNextAsync(ct))
+            foreach (var setting in settings.Current)
+            {
+                await ProjectAsync(new BsonString(setting.Id), "settings", setting.AuditIntents, ct);
+                var ids = setting.AuditIntents.Select(i => i.Id).ToArray();
+                await Settings.UpdateOneAsync(s => s.Id == setting.Id,
+                    Builders<PublishingSettingDocument>.Update.PullFilter(s => s.AuditIntents,
+                        Builders<PublishingAuditIntent>.Filter.In(i => i.Id, ids)), cancellationToken: ct);
+            }
     }
 
-    private async Task ProjectAsync(Guid entityId, string entityType, IEnumerable<PublishingAuditIntent> intents, CancellationToken ct)
+    private async Task ProjectAsync(BsonValue entityId, string entityType, IEnumerable<PublishingAuditIntent> intents, CancellationToken ct)
     {
         foreach (var intent in intents)
         {
@@ -388,7 +403,7 @@ public sealed class PublishingService(IMongoDatabase database, TimeProvider cloc
             {
                 ["_id"] = new BsonBinaryData(intent.Id, GuidRepresentation.Standard),
                 ["actorId"] = new BsonBinaryData(intent.ActorId, GuidRepresentation.Standard),
-                ["entityId"] = new BsonBinaryData(entityId, GuidRepresentation.Standard),
+                ["entityId"] = entityId,
                 ["entityType"] = entityType, ["action"] = intent.Action, ["at"] = intent.At,
                 ["changeSummary"] = new BsonDocument { ["fromRevision"] = intent.FromRevision, ["toRevision"] = intent.ToRevision }
             };
@@ -398,6 +413,80 @@ public sealed class PublishingService(IMongoDatabase database, TimeProvider cloc
                 new UpdateOptions { IsUpsert = true }, ct);
         }
     }
+
+    public async Task<PublishingPage<SettingResponse>> GetSettingsAsync(CancellationToken ct)
+    {
+        var setting = await Settings.Find(s => s.Id == StandaloneDonationKey).FirstOrDefaultAsync(ct)
+            ?? new PublishingSettingDocument();
+        return new([ToResponse(setting)], null);
+    }
+
+    public async Task<SettingResponse> UpdateSettingAsync(string key, long revision, SettingWriteRequest request, Guid actor, CancellationToken ct)
+    {
+        if (key != StandaloneDonationKey)
+            throw new PublishingException(404, "NOT_FOUND", "Setting not found.");
+        if (request.Value is null) throw PublishingValidation.Invalid("value", "Supply the typed setting value.");
+        var setting = await Settings.Find(s => s.Id == key).FirstOrDefaultAsync(ct);
+        var creating = setting is null;
+        setting ??= new PublishingSettingDocument { CreatedAt = Now() };
+        CheckRevision(setting.Revision, revision);
+        setting.Value = request.Value;
+        setting.Revision = checked(revision + 1);
+        setting.UpdatedAt = Now();
+        AddAudit(setting.AuditIntents, Intent(actor, "settings.updated", revision, setting.Revision));
+        if (creating)
+        {
+            try { await Settings.InsertOneAsync(setting, cancellationToken: ct); }
+            catch (MongoWriteException exception) when (exception.WriteError.Category == ServerErrorCategory.DuplicateKey)
+            { throw Stale(); }
+        }
+        else
+        {
+            var result = await Settings.ReplaceOneAsync(s => s.Id == key && s.Revision == revision, setting, cancellationToken: ct);
+            if (result.ModifiedCount != 1) throw Stale();
+        }
+        return ToResponse(setting);
+    }
+
+    public async Task<PublishingPage<AuditEventResponse>> ListAuditEventsAsync(
+        DateTimeOffset? since, DateTimeOffset? until, string? cursor, int limit, CancellationToken ct)
+    {
+        ValidateLimit(limit);
+        var end = until ?? clock.GetUtcNow();
+        if (since is null && end < DateTimeOffset.MinValue.AddDays(7))
+            throw PublishingValidation.Invalid("until", "Supply a start date for this early audit range.");
+        var start = since ?? end.AddDays(-7);
+        if (start > end || end - start > TimeSpan.FromDays(31))
+            throw PublishingValidation.Invalid("since", "Use an ordered audit date range of at most 31 days.");
+        var filters = Builders<BsonDocument>.Filter;
+        var filter = filters.Gte("at", start.UtcDateTime) & filters.Lte("at", end.UtcDateTime);
+        if (cursor is not null)
+        {
+            var (at, id) = DecodeCursor(cursor);
+            filter &= filters.Lt("at", at) | (filters.Eq("at", at)
+                & filters.Lt("_id", new BsonBinaryData(id, GuidRepresentation.Standard)));
+        }
+        var documents = await database.GetCollection<BsonDocument>("auditEvents").Find(filter)
+            .Sort(Builders<BsonDocument>.Sort.Descending("at").Descending("_id")).Limit(limit + 1).ToListAsync(ct);
+        var page = documents.Take(limit).Select(document =>
+        {
+            var summary = document.GetValue("changeSummary", new BsonDocument()).AsBsonDocument;
+            var entity = document["entityId"];
+            return new AuditEventResponse(document["_id"].AsBsonBinaryData.ToGuid(GuidRepresentation.Standard),
+                document["action"].AsString, document["actorId"].AsBsonBinaryData.ToGuid(GuidRepresentation.Standard),
+                document["entityType"].AsString, entity.IsBsonBinaryData
+                    ? entity.AsBsonBinaryData.ToGuid(GuidRepresentation.Standard).ToString("D") : entity.AsString,
+                new DateTimeOffset(document["at"].AsBsonDateTime.ToUniversalTime()),
+                document.TryGetValue("reason", out var reason) && !reason.IsBsonNull ? reason.AsString : null,
+                summary.TryGetValue("fromRevision", out var from) ? from.ToInt64() : null,
+                summary.TryGetValue("toRevision", out var to) ? to.ToInt64() : null);
+        }).ToArray();
+        return new(page, documents.Count > limit ? EncodeCursor(page[^1].At.UtcDateTime, page[^1].Id) : null);
+    }
+
+    private static SettingResponse ToResponse(PublishingSettingDocument setting) =>
+        new(setting.Id, setting.Value, setting.Revision,
+            setting.UpdatedAt.HasValue ? new DateTimeOffset(setting.UpdatedAt.Value) : null);
 
     private async Task<ProductDocument> ProductAsync(Guid id, CancellationToken ct) =>
         await Products.Find(p => p.Id == id && !p.Deleted).FirstOrDefaultAsync(ct)

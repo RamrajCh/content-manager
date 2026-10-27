@@ -9,7 +9,8 @@ public static class ApplicationPipeline
         app.Use(async (context, next) =>
         {
             if (context.Request.Path.StartsWithSegments("/api/v1/admin/products")
-                || context.Request.Path.StartsWithSegments("/api/v1/admin/categories"))
+                || context.Request.Path.StartsWithSegments("/api/v1/admin/categories")
+                || context.Request.Path.StartsWithSegments("/api/v1/admin/settings"))
             {
                 var bodyLimit = context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>();
                 if (bodyLimit is { IsReadOnly: false }) bodyLimit.MaxRequestBodySize = 100_000;

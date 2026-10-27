@@ -1,6 +1,6 @@
 # MVP Execution Plan
 
-**Status:** Phase 2 started with EX-04 administrator authentication; see [Phase 1 progress](./phase-1-progress.md) and [Phase 2 progress](./phase-2-progress.md) for evidence and outstanding gates.  
+**Status:** EX-06 is owner-accepted on 2026-10-27 following owner-reported validation with the expected result. Phase 2 prerequisite acceptance evidence and unrecorded manual checks remain outstanding; see [Phase 1 progress](./phase-1-progress.md) and [Phase 2 progress](./phase-2-progress.md).
 **Scope:** Downloadable products with public previews, flexible NPR pricing, manually verified QR payments, and secure email fulfillment.  
 **Authority:** This plan executes the existing design; it does not replace or silently change it.
 
@@ -54,7 +54,7 @@ Use one API application initially with feature folders, not mandatory extra proj
 
 ## 3. Work packages
 
-The package tables describe the baseline backlog; current execution status and evidence are recorded in [Phase 1 progress](./phase-1-progress.md) and [Phase 2 progress](./phase-2-progress.md). EX-04 is in progress; EX-05 through EX-30 have not started. IDs EX-01 through EX-30 are execution identifiers; P1-P9 and FR/NFR/F/QA identifiers retain their meanings in the design. A listed dependency is a prerequisite, not just a preferred ordering.
+The package tables describe the baseline backlog; current execution status and evidence are recorded in [Phase 1 progress](./phase-1-progress.md) and [Phase 2 progress](./phase-2-progress.md). EX-06 is owner-accepted; EX-04/EX-05 have local implementations with outstanding acceptance evidence. EX-07 through EX-30 have not started. At the owner's request, validation is run manually by the owner, not automatically by the assistant; unrun gates remain pending. IDs EX-01 through EX-30 are execution identifiers; P1-P9 and FR/NFR/F/QA identifiers retain their meanings in the design. A listed dependency is a prerequisite, not just a preferred ordering.
 
 ### P1 - Foundation
 

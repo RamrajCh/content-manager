@@ -69,6 +69,38 @@ public sealed record CategoryResponse(Guid Id, string Name, string Slug, long Re
 /// <summary>Bounded page ordered by creation time and identifier.</summary>
 public sealed record PublishingPage<T>(IReadOnlyList<T> Items, string? NextCursor);
 
+/// <summary>Non-secret standalone support policy; not a payment-provider configuration.</summary>
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed record StandaloneDonationSetting
+{
+    public required bool Enabled { get; init; }
+}
+
+/// <summary>Full replacement of the allowlisted standalone-donation policy.</summary>
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed record SettingWriteRequest
+{
+    public required StandaloneDonationSetting Value { get; init; }
+}
+
+/// <summary>Versioned non-secret policy; missing persisted configuration defaults to disabled.</summary>
+public sealed record SettingResponse(string Key, StandaloneDonationSetting Value, long Revision, DateTimeOffset? UpdatedAt);
+
+/// <summary>Allowlisted audit metadata, excluding credentials and arbitrary stored change payloads.</summary>
+public sealed record AuditEventResponse(Guid Id, string Action, Guid ActorId, string EntityType,
+    string EntityId, DateTimeOffset At, string? Reason, long? FromRevision, long? ToRevision);
+
+public sealed class PublishingSettingDocument
+{
+    public string Id { get; set; } = "standaloneDonationsEnabled";
+    public int SchemaVersion { get; set; } = 1;
+    public DateTime CreatedAt { get; set; }
+    public StandaloneDonationSetting Value { get; set; } = new() { Enabled = false };
+    public long Revision { get; set; } = 1;
+    public DateTime? UpdatedAt { get; set; }
+    public List<PublishingAuditIntent> AuditIntents { get; set; } = [];
+}
+
 public sealed class PublishingAuditIntent
 {
     public Guid Id { get; set; } = Guid.NewGuid();

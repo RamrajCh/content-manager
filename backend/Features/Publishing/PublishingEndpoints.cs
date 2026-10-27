@@ -78,6 +78,28 @@ public static class PublishingEndpoints
             await service.DeleteCategoryAsync(id, Revision(context), Actor(context), ct);
             return TypedResults.NoContent();
         }).WithSummary("Delete only an unreferenced category").ProducesProblem(409).ProducesProblem(412);
+
+        group.MapGet("/settings", async (IPublishingService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.GetSettingsAsync(ct)))
+            .WithTags("Administrator settings").WithSummary("Get allowlisted non-secret policy settings");
+        group.MapPut("/settings/{key}", async (string key, JsonElement body, HttpContext context,
+            IPublishingService service, CancellationToken ct) =>
+        {
+            ValidateBody(body);
+            SettingWriteRequest request;
+            try { request = body.Deserialize<SettingWriteRequest>(JsonOptions)!; }
+            catch (JsonException) { throw PublishingValidation.Invalid("value", "Supply value.enabled as a boolean; unknown settings fields are not accepted."); }
+            var response = await service.UpdateSettingAsync(key, Revision(context), request, Actor(context), ct);
+            ETag(context, response.Revision);
+            return TypedResults.Ok(response);
+        }).Accepts<SettingWriteRequest>("application/json").WithTags("Administrator settings")
+            .WithSummary("Replace an allowlisted non-secret policy with If-Match")
+            .ProducesProblem(400).ProducesProblem(404).ProducesProblem(412).ProducesProblem(428);
+        group.MapGet("/audit-events", async (DateTimeOffset? since, DateTimeOffset? until, string? cursor,
+            int? limit, IPublishingService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.ListAuditEventsAsync(since, until, cursor, limit ?? 20, ct)))
+            .WithTags("Administrator audit").WithSummary("Browse redacted audit events within at most 31 days")
+            .ProducesProblem(400);
     }
 
     private static async ValueTask<object?> HandleErrors(EndpointFilterInvocationContext invocation, EndpointFilterDelegate next)

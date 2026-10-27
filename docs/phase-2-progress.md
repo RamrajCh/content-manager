@@ -1,7 +1,7 @@
 # Phase 2 Implementation Evidence
 
-**Recorded:** 2026-10-26.  
-**Status:** EX-04 implemented locally with acceptance checks still outstanding. EX-05 and EX-06 have not started. Phase 2 is not complete.
+**Recorded:** 2026-10-27.
+**Status:** EX-06 is owner-accepted as of 2026-10-27 following owner-reported validation with the expected result. EX-04/EX-05 acceptance evidence and the unrecorded manual scenarios below remain outstanding; this does not declare all Phase 2 gates or production readiness complete.
 
 Read alongside the [execution plan](./execution-plan.md), [Phase 1 evidence](./phase-1-progress.md), and [owner setup and recovery instructions](../README.md#administrator-setup-and-recovery).
 
@@ -24,9 +24,102 @@ The owner reported `npm run validate` passed and authorized implementation. Late
 - Shared administrator authorization filter for later route groups; documented `totpOrRecoveryCode` login contract and manual HTTP examples.
 - Sign-out errors and session-service failures are displayed rather than silently treated as a successful sign-out.
 
-The browser placeholder is not a product editor. Publishing, settings and product/category lifecycle endpoints remain unimplemented.
+The authentication placeholder has now been extended with the private authoring
+workspace described below, including basic settings and an audit browser.
+Complete publication remains deliberately blocked until EX-09.
 
-## Recorded checks
+## Publishing implementation continued on 2026-10-27
+
+The existing EX-05 implementation includes private administrator product/category
+CRUD, bounded cursor pagination, permanent product slug reservations and redirect
+metadata, tags, sanitized descriptions, versioned licenses/pricing, optimistic
+revision checks, lifecycle endpoints, durable audit intents/projection and
+offline reconciliation. Manual requests are in [Publishing.http](../backend/Publishing.http).
+Code presence is not acceptance evidence; QA-01 outcomes are still pending.
+
+The EX-06 authoring UI now provides:
+
+- Product listing/filtering and incremental pagination; create/edit drafts,
+  category assignment, tags, description HTML, license and SEO fields.
+- A pricing configuration shell for all six modes, using integer NPR paisa.
+  Irrelevant pricing fields are cleared when saving a different mode. Zero
+  access and optional contributions remain distinct; no payment workflow is
+  enabled.
+- Explicit revision headers on edits, deletes and lifecycle transitions;
+  stable create request keys for unchanged retries; visible API field errors,
+  stale-edit instructions, session-expiry redirection and service failures.
+- A saved private preview fetched independently of the editor. It renders
+  server-sanitized description HTML in an empty-sandbox, network-blocked iframe;
+  opening a preview does not advance the editor's revision or overwrite edits.
+- Category create/edit/delete, additional category pages, reload controls and
+  selected-category preservation while further pages are not yet loaded.
+- Archive/unpublish/delete controls with confirmation, unsaved product-change
+  prompts and browser-exit warnings. Failed saves preserve entered values.
+- A disabled Publish control explaining the EX-09 prerequisite. The API also
+  independently rejects publication; the UI is not the enforcement boundary.
+- A typed, revision-controlled `standaloneDonationsEnabled` policy, defaulting
+  off when unconfigured. Only this allowlisted non-secret setting is returned
+  or writable; no arbitrary configuration, receiving-account credentials or
+  environment secrets are exposed. A stored opt-in does not implement checkout
+  or enable payment collection.
+- Durable settings audit intents projected by the existing publishing worker,
+  alongside products/categories. The authenticated audit browser exposes only
+  event/actor/entity/time/reason/revision metadata, with a default seven-day
+  range, maximum 31-day date window and cursor pagination.
+
+Existing attachment references are preserved by metadata edits. Uploads and
+attachment replacement are not introduced by this authoring UI.
+
+### Validation ownership and latest attempt
+
+**Owner acceptance recorded 2026-10-27:** The owner explicitly requested
+"Accept Ex-06" and reported running validation with the result as expected.
+EX-06 is therefore recorded as owner-accepted. This is owner-reported evidence;
+the assistant did not rerun validation or inspect its output. No individual
+browser/API scenario or clean NuGet vulnerability audit is inferred from this
+report. The existing HTTP 403 exception and release obligations still apply.
+
+The owner requested that the assistant no longer run `npm run validate`:
+validation will be run manually by the owner. The manual command and script
+remain available; they have not been deleted or weakened. No automatic
+validation invocation is added by this implementation.
+
+Historical assistant attempt, before that request: a full-run accepted the existing NuGet audit HTTP
+403 exception, then failed with MSB3027/MSB3021 because the running API
+(PID 37504) locked the Release executable. Later frontend/dependency gates were
+not reached. The owner requested leaving that API running; it has not been
+stopped, restarted, rebuilt in place or used to reset owner credentials.
+At implementation handoff, the assistant had not built or runtime-tested the
+new UI and settings/audit API changes. The owner's subsequent validation report
+above supersedes the pending validation status, not the unrecorded runtime
+checks. Editor diagnostics reported no errors. The API must be rebuilt/restarted by the owner before
+the new settings/audit endpoints are available. Rerun explicit database
+initialization to add the `audit_page` index without resetting existing data.
+
+### Owner manual acceptance queue
+
+| Check | Expected | Current result |
+| --- | --- | --- |
+| Manual validation | Owner runs `npm run validate`, accounting for the running executable lock and approved audit exception | Owner reported expected result on 2026-10-27; output not independently inspected |
+| EX-06 acceptance | Owner accepts the publishing interface and settings work package | Accepted by explicit owner instruction on 2026-10-27 |
+| Draft authoring | Create category/draft, save metadata, reload and verify persistence | Pending |
+| Private preview | Saved sanitized HTML displayed; unsaved editor text is not rendered; anonymous API access denied | Pending |
+| Concurrent edit | Two tabs editing one revision yield 412 for the stale tab; its entered values remain until explicit reload | Pending |
+| Slug/reference constraints | Duplicate/reserved slug and referenced product/category deletion rejected; safe errors visible | Pending |
+| Pricing shell | All six valid configurations save; fractional/out-of-range paisa and contradictory configuration rejected | Pending |
+| Lifecycle | Archive/unpublish enforce state/revision; publication remains unavailable until EX-09 | Pending |
+| Failure UX | Service outage, expired session and failed save display errors without clearing edited fields | Pending |
+| Pagination/accessibility | More than one page of products/categories works; keyboard, narrow viewport and zoom remain usable | Pending |
+| Audit persistence | Mutations retain durable intents; projection is idempotent and survives retry | Pending |
+| Settings | Unconfigured flag is off; save/reload persists; stale revision returns 412; extra fields/unknown keys rejected; anonymous/CSRF-invalid writes denied | Pending |
+| Audit browser | Product/category/settings and projected offline-owner events display; invalid dates/cursors rejected; subsequent pages do not repeat events; no raw configuration exposed | Pending |
+
+EX-06 owner acceptance is recorded without retroactively marking EX-04/EX-05
+Done or unrecorded scenarios passed. Reconcile those prerequisite acceptance
+gates before accepting dependent public-catalog work. This package acceptance
+is not a whole-phase or production-approval claim.
+
+## Previously recorded authentication checks
 
 These are local smoke checks, not the full QA-17 suite or an independent security review.
 
@@ -119,4 +212,5 @@ rerun for this policy-only change; running services were left untouched.
 - Rotate the development credentials issued during smoke checks before using any real data. Credentials disclosed in chat are test-only and are deliberately omitted from this document.
 - Authentication review and production TLS/cookie behavior remain outstanding. Local success is not production approval.
 
-Do not mark EX-04 Done or accept EX-05/EX-06 until the relevant prerequisite and acceptance gates are satisfied.
+EX-06 is owner-accepted as recorded above. Do not mark EX-04/EX-05 Done or
+declare all Phase 2 gates complete without the remaining acceptance evidence.

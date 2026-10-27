@@ -35,7 +35,9 @@ public static class DatabaseSetup
                 new(Builders<BsonDocument>.IndexKeys.Ascending("entityType").Ascending("entityId").Descending("at"),
                     new CreateIndexOptions { Name = "entity_time" }),
                 new(Builders<BsonDocument>.IndexKeys.Ascending("actorId").Descending("at"),
-                    new CreateIndexOptions { Name = "actor_time" })
+                    new CreateIndexOptions { Name = "actor_time" }),
+                new(Builders<BsonDocument>.IndexKeys.Descending("at").Descending("_id"),
+                    new CreateIndexOptions { Name = "audit_page" })
             ],
             ["slugReservations"] = [new(Builders<BsonDocument>.IndexKeys.Ascending("slug"),
                 new CreateIndexOptions { Name = "unique_slug", Unique = true })],
