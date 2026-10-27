@@ -1,3 +1,10 @@
+---
+type: Business Rules
+title: Business and Technical Rules
+description: Authoritative content, pricing, payment, access, privacy, security, and operational rules.
+tags: [rules, commerce, security, operations]
+---
+
 # Business and Technical Rules
 
 > Part of the [Technical Design Document](./technical-design-document.md). Stable requirement, feature, rule, phase, QA, and source identifiers are shared across this documentation set.

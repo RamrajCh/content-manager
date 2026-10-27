@@ -1,3 +1,10 @@
+---
+type: Product Requirements
+title: Product Requirements Document
+description: Product goals, user journeys, feature specifications, and UI requirements.
+tags: [product, requirements, user-experience]
+---
+
 # Product Requirements Document
 
 > Part of the [Technical Design Document](./technical-design-document.md). Stable requirement, feature, rule, phase, QA, and source identifiers are shared across this documentation set.

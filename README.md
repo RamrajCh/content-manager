@@ -14,7 +14,7 @@ email fulfillment remain outstanding. See [Phase 2 progress](./docs/phase-2-prog
 | [backend](./backend) | ASP.NET Core 10 API, typed configuration, Mongo readiness and explicit index setup |
 | [infra/local](./infra/local) | Loopback-only MongoDB, authenticated SeaweedFS S3 and Mailpit capture containers |
 | [scripts](./scripts) | Local settings, service/API startup and validation |
-| [docs](./docs) | [Design index](./docs/technical-design-document.md), [execution plan](./docs/execution-plan.md) and [Phase 1 evidence](./docs/phase-1-progress.md) |
+| [docs](./docs) | [OKF knowledge bundle](./docs/index.md), [design overview](./docs/technical-design-document.md), [execution plan](./docs/execution-plan.md) and [Phase 1 evidence](./docs/phase-1-progress.md) |
 
 ## Prerequisites
 

@@ -1,3 +1,10 @@
+---
+type: Architecture
+title: Architecture and Technical Stack
+description: Technology choices, system boundaries, deployment architecture, and rollback specifications.
+tags: [architecture, technology, deployment]
+---
+
 # Architecture and Technical Stack
 
 > Part of the [Technical Design Document](./technical-design-document.md). Stable requirement, feature, rule, phase, QA, and source identifiers are shared across this documentation set.

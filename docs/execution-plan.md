@@ -1,3 +1,10 @@
+---
+type: Execution Plan
+title: MVP Execution Plan
+description: Implementation work packages, dependencies, acceptance evidence, milestones, and launch stop conditions.
+tags: [implementation, planning, mvp]
+---
+
 # MVP Execution Plan
 
 **Status:** EX-06 is owner-accepted on 2026-10-27 following owner-reported validation with the expected result. Phase 2 prerequisite acceptance evidence and unrecorded manual checks remain outstanding; see [Phase 1 progress](./phase-1-progress.md) and [Phase 2 progress](./phase-2-progress.md).

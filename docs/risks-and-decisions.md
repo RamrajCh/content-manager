@@ -1,3 +1,10 @@
+---
+type: Risk Register
+title: Risks, Dependencies, and Open Decisions
+description: Risk register, dependencies, and unresolved launch decisions.
+tags: [risks, decisions, operations]
+---
+
 # Risks, Dependencies, and Open Decisions
 
 > Part of the [Technical Design Document](./technical-design-document.md). Stable requirement, feature, rule, phase, QA, and source identifiers are shared across this documentation set.

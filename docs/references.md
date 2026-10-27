@@ -1,3 +1,10 @@
+---
+type: Reference
+title: References and Evidence Notes
+description: Official research sources, stable citation identifiers, and evidence qualifications.
+tags: [references, research, evidence]
+---
+
 # References and Evidence Notes
 
 > Part of the [Technical Design Document](./technical-design-document.md). Stable requirement, feature, rule, phase, QA, and source identifiers are shared across this documentation set.

@@ -1,3 +1,10 @@
+---
+type: Requirements Specification
+title: Requirements and Traceability
+description: Actors, functional and non-functional requirements, acceptance criteria, and traceability.
+tags: [requirements, acceptance-criteria, traceability]
+---
+
 # Requirements and Traceability
 
 > Part of the [Technical Design Document](./technical-design-document.md). Stable requirement, feature, rule, phase, QA, and source identifiers are shared across this documentation set.

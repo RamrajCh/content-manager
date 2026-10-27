@@ -1,3 +1,10 @@
+---
+type: Readiness Checklist
+title: Security, Manual QA, and Production Readiness
+description: Design threat controls, manual QA cases, and production-launch requirements.
+tags: [security, qa, production-readiness]
+---
+
 # Security, Manual QA, and Production Readiness
 
 > Part of the [Technical Design Document](./technical-design-document.md). Stable requirement, feature, rule, phase, QA, and source identifiers are shared across this documentation set.

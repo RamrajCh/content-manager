@@ -1,3 +1,10 @@
+---
+type: Design Overview
+title: Technical Design Document - Digital Content and Optional Donation Platform
+description: Design baseline, confirmed constraints, assumptions, and glossary for the digital-download platform.
+tags: [overview, design, constraints]
+---
+
 # Technical Design Document - Digital Content and Optional Donation Platform
 
 **Status:** Design baseline for implementation; not a production-readiness certification.  
@@ -6,6 +13,9 @@
 **Implementation:** Phase 1 local foundation exists in separate frontend/backend applications; no production deployment or commerce functionality. See [Phase 1 progress](./phase-1-progress.md) for evidence and outstanding gates.
 
 ## Documentation map
+
+For grouped navigation and documentation conventions, start with the
+[OKF knowledge bundle index](./index.md).
 
 This file is the overview and entry point, not a duplicate monolithic TDD. Read the linked documents as one design baseline; each section has one authoritative home. Original section numbers are retained so existing references remain recognizable.
 

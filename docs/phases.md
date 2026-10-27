@@ -1,3 +1,10 @@
+---
+type: Development Roadmap
+title: Development Phases
+description: Implementation dependencies, phase deliverables, manual acceptance gates, and deferred scope.
+tags: [implementation, planning, roadmap]
+---
+
 # Development Phases
 
 > Part of the [Technical Design Document](./technical-design-document.md). Stable requirement, feature, rule, phase, QA, and source identifiers are shared across this documentation set.

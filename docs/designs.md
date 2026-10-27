@@ -1,3 +1,10 @@
+---
+type: Technical Design
+title: Detailed Technical Designs
+description: Frontend routes, data models, REST contracts, payment and delivery states, storage, and email workflows.
+tags: [design, api, data-models, fulfillment]
+---
+
 # Detailed Technical Designs
 
 > Part of the [Technical Design Document](./technical-design-document.md). Stable requirement, feature, rule, phase, QA, and source identifiers are shared across this documentation set.

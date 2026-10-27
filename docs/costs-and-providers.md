@@ -1,3 +1,10 @@
+---
+type: Provider Assessment
+title: Costs, Providers, and Nepal Availability
+description: Provider research, free-tier constraints, Nepal availability, capacity estimates, and adoption checks.
+tags: [providers, costs, nepal, operations]
+---
+
 # Costs, Providers, and Nepal Availability
 
 > Part of the [Technical Design Document](./technical-design-document.md). Stable requirement, feature, rule, phase, QA, and source identifiers are shared across this documentation set.
